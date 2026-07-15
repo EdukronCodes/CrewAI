@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CrewAI Job Assistant</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; }
+      .container { max-width: 980px; margin: 0 auto; padding: 2rem; }
+      .card { background: #111827; padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; }
+      input, select, button { width: 100%; padding: 0.8rem; margin-top: 0.5rem; border-radius: 8px; border: 1px solid #334155; }
+      button { background: #2563eb; color: white; cursor: pointer; }
+      .results { display: grid; gap: 1rem; }
+      .job { background: #1f2937; padding: 1rem; border-radius: 8px; }
+      .muted { color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>CrewAI Job Search Assistant</h1>
+      <p class="muted">Describe the role you want and let the agent surface matching opportunities.</p>
+      <div class="card">
+        <label>Job role</label>
+        <input id="role" value="Python Engineer" />
+        <label>Location</label>
+        <input id="location" value="Remote" />
+        <label>Experience</label>
+        <select id="experience">
+          <option value="junior">Junior</option>
+          <option value="mid" selected>Mid</option>
+          <option value="senior">Senior</option>
+        </select>
+        <label>Resume text</label>
+        <textarea id="resume" rows="4" style="width:100%;margin-top:0.5rem;border-radius:8px;padding:0.8rem;"></textarea>
+        <button onclick="runSearch()">Search jobs</button>
+      </div>
+      <div id="summary" class="card"></div>
+      <div id="results" class="results"></div>
+    </div>
+    <script>
+      async function runSearch() {
+        const payload = {
+          role: document.getElementById('role').value,
+          location: document.getElementById('location').value,
+          experience: document.getElementById('experience').value,
+          resume_text: document.getElementById('resume').value,
+        };
+        const res = await fetch('/api/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        document.getElementById('summary').innerHTML = '<h3>Summary</h3><p>' + (data.summary || 'No summary') + '</p>';
+        const results = document.getElementById('results');
+        results.innerHTML = '';
+        (data.matches || []).forEach(job => {
+          const el = document.createElement('div');
+          el.className = 'job';
+          el.innerHTML = '<h3>' + job.title + '</h3><p><strong>Company:</strong> ' + job.company + '</p><p><strong>Location:</strong> ' + job.location + '</p><p><strong>Match:</strong> ' + Math.round(job.match_score * 100) + '%</p><p>' + (job.why_match || '') + '</p>';
+          results.appendChild(el);
+        });
+      }
+    </script>
+  </body>
+</html>
